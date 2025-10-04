@@ -1,0 +1,19 @@
+<!-- embed.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Embed Loader</title>
+</head>
+<body>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const embedCode = params.get("code");
+
+    if (embedCode) {
+      document.write(decodeURIComponent(embedCode));
+    } else {
+      document.body.innerHTML = "<h2>No embed code provided</h2>";
+    }
+  </script>
+</body>
+</html>
