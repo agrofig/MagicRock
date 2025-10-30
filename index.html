@@ -1,613 +1,451 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Bot Blaster — Mini HTML5 Game</title>
-<style>
-  :root{
-    --bg:#0b1220;
-    --panel:#0f1724;
-    --accent:#3ee0a3;
-    --muted:#9aa4b2;
-    --danger:#ff5c7c;
-  }
-  html,body{height:100%;margin:0;background:linear-gradient(180deg,#07101a,#0b1220);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;}
-  #gameWrap{max-width:1000px;margin:18px auto;padding:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:10px;box-shadow:0 8px 30px rgba(2,6,23,0.7);display:flex;gap:12px;}
-  canvas{background:linear-gradient(180deg,#08111a,#07111a);border-radius:8px;display:block;}
-  .ui{width:320px;color:#cfe7dd;padding:12px;border-radius:8px;}
-  h1{font-size:20px;margin:2px 0 8px 0;color:var(--accent);}
-  .panel{background:linear-gradient(180deg,var(--panel),rgba(255,255,255,0.01));padding:10px;border-radius:8px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.03);}
-  .status{display:flex;justify-content:space-between;align-items:center;font-size:14px;color:var(--muted);}
-  .big{font-size:18px;color:#fff;margin:6px 0;}
-  button.shopBtn{width:100%;margin:6px 0;padding:8px;background:linear-gradient(180deg,#18333a,#0e2a2f);color:#bfeee0;border:1px solid rgba(255,255,255,0.04);border-radius:6px;cursor:pointer;}
-  button.shopBtn:disabled{opacity:0.45;cursor:not-allowed;}
-  .muted{color:var(--muted);font-size:13px;}
-  .center{display:flex;align-items:center;justify-content:center;}
-  .controls{font-size:13px;color:var(--muted);margin-top:8px;}
-  .small{font-size:12px;color:var(--muted);}
-  .weaponBox{display:flex;gap:8px;flex-direction:column;}
-  .row{display:flex;gap:8px;align-items:center;}
-  .stat{display:flex;justify-content:space-between;font-size:13px;padding:6px 0;border-bottom:1px dashed rgba(255,255,255,0.02);}
-  .footer{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;}
-  .hud{display:flex;gap:8px;flex-wrap:wrap;}
-  .badge{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:6px;font-weight:600;color:#dff6ee;}
-  .danger{color:var(--danger);font-weight:700;}
-  .stage{font-weight:700;color:#fff;}
-  .msg{padding:8px;border-radius:6px;background:rgba(255,255,255,0.015);font-size:13px;margin-bottom:6px;}
-</style>
-</head>
-<body>
-<div id="gameWrap">
-  <canvas id="game" width="720" height="480"></canvas>
-  <div class="ui">
-    <h1>Bot Blaster</h1>
+<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8" /> <meta name="viewport" content="width=device-width, initial-scale=1.0" /> <title>Auto-Generated Adventure Game</title> <style> /* Basic reset and styling */ body, html { margin: 0; padding: 0; overflow: hidden; background: linear-gradient(to bottom, #1e2a38, #0a121f); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #eee; } canvas { display: block; background: #0a121f; margin: 0 auto; border: 2px solid #3ee0a3; border-radius: 8px; } #ui { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 10px; font-size: 16px; display: flex; gap: 20px; user-select: none; z-index: 10; } #messages { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 10px; max-width: 90vw; font-size: 14px; min-height: 24px; text-align: center; pointer-events: none; color: #3ee0a3; font-weight: bold; z-index: 10; } button { background: #3ee0a3; border: none; padding: 8px 16px; border-radius: 6px; color: #0a121f; font-weight: bold; cursor: pointer; transition: background 0.3s ease; } button:hover { background: #2bbd85; } </style> </head> <body> <canvas id="gameCanvas" width="800" height="600"></canvas> <div id="ui"> <div>HP: <span id="hp">100</span></div> <div>Coins: <span id="coins">0</span></div> <div>Level: <span id="level">1</span></div> <button id="shopBtn" disabled>Open Shop</button> </div> <div id="messages"></div>
 
-    <div class="panel" id="hudPanel">
-      <div class="status">
-        <div class="hud">
-          <div class="badge" id="coins">Coins: 0</div>
-          <div class="badge" id="level">Level: 1</div>
-          <div class="badge" id="enemiesLeft">Enemies: 0</div>
-        </div>
-        <div class="badge" id="hp">HP: 100</div>
-      </div>
-      <div class="msg" id="msg">Click to shoot. Move with WASD / arrows.</div>
-      <div class="small" id="weaponInfo">Weapon: Basic</div>
-    </div>
+<script> // Game constants const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d'); const W = canvas.width; const H = canvas.height;
 
-    <div class="panel">
-      <div class="big">Shop & Upgrades</div>
-      <div class="small muted">Spend coins between levels to upgrade. Upgrades persist across levels.</div>
-      <div style="margin-top:8px" class="weaponBox" id="shop">
-        <!-- Buttons inserted by JS -->
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="big">Game Controls</div>
-      <div class="controls">
-        Move: WASD / Arrows<br>
-        Aim: Mouse — Shoot: Click or Space (hold to auto-fire)
-      </div>
-    </div>
-
-    <div class="footer">
-      <div class="small muted">Built with Canvas — Single file. Refresh to restart fresh.</div>
-    </div>
-  </div>
-</div>
-
-<script>
-/* Simple top-down shooter with upgrades, levels and coins.
-   - Use mouse to aim and click to shoot
-   - WASD / arrow keys to move
-   - After all enemies are defeated the shop becomes available (automatic)
-*/
-
-/* --- Game constants & state --- */
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-const W = canvas.width, H = canvas.height;
-let last = 0;
-let running = true;
-
-let gameState = {
-  level: 1,
-  coins: 0,
-  enemiesLeft: 0,
-  screen: 'play', // play / shop / win / dead
-  wonMessage: '',
-};
-
-/* --- Player & upgrade data --- */
+// Player object
 const player = {
-  x: W/2, y: H - 60, r: 12,
-  speed: 180, // px/s
-  maxHp: 100,
+  x: W / 2,
+  y: H / 2,
+  radius: 15,
+  speed: 200, // pixels per second
   hp: 100,
-  weapon: 'basic', // basic, spread, rapid
+  maxHp: 100,
+  coins: 0,
+  level: 1,
   upgrades: {
-    healthBoost: 0, // increases max hp
-    speedBoost: 0,  // increases speed
-    weaponLevel: 0, // for possible future scaling
-  },
-  shootCooldown: 0, // seconds
+    damage: 10,
+    speed: 200,
+    hpBoost: 0
+  }
 };
 
-/* Weapon definitions */
-const weapons = {
-  basic: {name:'Basic', cooldown:0.35, bulletSpeed:420, damage:15, cost:0, desc:'Reliable single shot.'},
-  spread: {name:'Spread', cooldown:0.6, bulletSpeed:360, damage:12, cost:40, desc:'Shoots 3 pellets.'},
-  rapid: {name:'Rapid', cooldown:0.12, bulletSpeed:500, damage:8, cost:80, desc:'Fast single bullets.'}
-};
+// Controls state
+const keys = {};
 
-/* Upgrade shop items */
-const shopItems = [
-  {id:'buy_spread', title:'Buy Spread Gun', price:40, cb:()=>buyWeapon('spread'), cond:()=>!hasWeapon('spread')},
-  {id:'buy_rapid', title:'Buy Rapid Gun', price:80, cb:()=>buyWeapon('rapid'), cond:()=>!hasWeapon('rapid')},
-  {id:'heal', title:'Heal to Full', price:25, cb:healFull, cond:()=>player.hp < player.maxHp},
-  {id:'hp_up', title:'+20 Max HP', price:60, cb:increaseHP, cond:()=>true},
-  {id:'speed', title:'+20% Speed', price:70, cb:increaseSpeed, cond:()=>true},
-];
-
-/* Entities */
-let bullets = [];
+// Game state
 let enemies = [];
-let particles = [];
-let keys = {};
-let mouse = {x: W/2, y: H/2, down:false};
+let sawBlades = [];
+let chests = [];
+let shops = [];
+let bullets = [];
+let lastTime = 0;
+let gameOver = false;
+let shopOpen = false;
 
-/* Utility */
-function rand(min,max){return Math.random()*(max-min)+min;}
-function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
-
-/* --- Shop functions --- */
-function hasWeapon(name){ return name === 'basic' ? true : player.unlocked && player.unlocked.includes(name); }
-player.unlocked = ['basic'];
-
-function buyWeapon(name){
-  const w = weapons[name];
-  if(!w) return;
-  if(gameState.coins < w.cost) return alert('Not enough coins');
-  gameState.coins -= w.cost;
-  if(!player.unlocked.includes(name)) player.unlocked.push(name);
-  player.weapon = name;
-  updateUI();
-}
-
-function healFull(){
-  if(gameState.coins < 25) return alert('Not enough coins');
-  gameState.coins -= 25;
-  player.hp = player.maxHp;
-  updateUI();
-}
-function increaseHP(){
-  if(gameState.coins < 60) return alert('Not enough coins');
-  gameState.coins -= 60;
-  player.upgrades.healthBoost += 20;
-  player.maxHp += 20;
-  player.hp += 20;
-  updateUI();
-}
-function increaseSpeed(){
-  if(gameState.coins < 70) return alert('Not enough coins');
-  gameState.coins -= 70;
-  player.upgrades.speedBoost += 0.2;
-  player.speed = Math.round(player.speed * 1.2);
-  updateUI();
-}
-
-/* --- Enemy spawning & level difficulty --- */
-function startLevel(){
-  bullets = []; enemies = []; particles = [];
-  player.x = W/2; player.y = H - 60;
-  // increase challenge as level rises
-  const lvl = gameState.level;
-  const count = 4 + Math.floor(lvl * 1.5);
-  gameState.enemiesLeft = count;
-  for(let i=0;i<count;i++){
-    const e = createEnemy(lvl);
-    enemies.push(e);
-  }
-  gameState.screen = 'play';
-  updateUI();
-}
-
-function createEnemy(level){
-  // spawn at top area randomly
-  const side = Math.random();
-  const x = rand(30, W-30);
-  const y = rand(30, 140);
-  const baseHp = 20 + level*6 + Math.round(rand(0, level*4));
-  const spd = 30 + level*10 + rand(0, level*2);
-  const size = 10 + Math.min(10, Math.floor(level/4));
-  return {
-    x, y, r:size, hp:baseHp, maxHp:baseHp,
-    speed: spd,
-    shootTimer: rand(0.8,2.4),
-    colorHue: Math.floor(rand(160, 330))
-  };
-}
-
-/* --- Input handling --- */
-window.addEventListener('keydown', e=>{ keys[e.key.toLowerCase()] = true; if(e.code==='Space') mouse.down = true; });
-window.addEventListener('keyup', e=>{ keys[e.key.toLowerCase()] = false; if(e.code==='Space') mouse.down = false; });
-canvas.addEventListener('mousedown', e=>{ mouse.down = true; });
-canvas.addEventListener('mouseup', e=>{ mouse.down = false; });
-canvas.addEventListener('mousemove', e=>{ const rect = canvas.getBoundingClientRect(); mouse.x = (e.clientX - rect.left) * (canvas.width/rect.width); mouse.y = (e.clientY - rect.top) * (canvas.height/rect.height); });
-canvas.addEventListener('touchstart', e=>{ e.preventDefault(); mouse.down = true; const t=e.touches[0]; const rect=canvas.getBoundingClientRect(); mouse.x=(t.clientX-rect.left)*(canvas.width/rect.width); mouse.y=(t.clientY-rect.top)*(canvas.height/rect.height); }, {passive:false});
-canvas.addEventListener('touchmove', e=>{ e.preventDefault(); const t=e.touches[0]; const rect=canvas.getBoundingClientRect(); mouse.x=(t.clientX-rect.left)*(canvas.width/rect.width); mouse.y=(t.clientY-rect.top)*(canvas.height/rect.height); }, {passive:false});
-canvas.addEventListener('touchend', e=>{ mouse.down = false; }, {passive:false});
-
-/* --- Shooting & bullets --- */
-function shootAim(){
-  const wield = player.weapon;
-  const wdef = weapons[wield];
-  if(!wdef) return;
-  const cooldown = wdef.cooldown;
-  if(player.shootCooldown > 0) return;
-  const angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
-  if(wield === 'spread'){
-    const spreadAngles = [-0.18, 0, 0.18];
-    spreadAngles.forEach(sa=>{
-      bullets.push({
-        x: player.x + Math.cos(angle+sa)*player.r,
-        y: player.y + Math.sin(angle+sa)*player.r,
-        vx: Math.cos(angle+sa)*wdef.bulletSpeed,
-        vy: Math.sin(angle+sa)*wdef.bulletSpeed,
-        dmg: wdef.damage,
-        life: 2.0,
-        r: 4
-      });
-    });
-  } else {
-    bullets.push({
-      x: player.x + Math.cos(angle)*player.r,
-      y: player.y + Math.sin(angle)*player.r,
-      vx: Math.cos(angle)*wdef.bulletSpeed,
-      vy: Math.sin(angle)*wdef.bulletSpeed,
-      dmg: wdef.damage,
-      life: 2.0,
-      r: 4
-    });
-  }
-  player.shootCooldown = cooldown;
-  // small recoil/particle
-  particles.push({x:player.x,y:player.y,ttl:0.18,size:4,dx:rand(-20,20),dy:rand(-20,20),col:'#9fffbf'});
-}
-
-/* --- Main update loop --- */
-function update(dt){
-  if(gameState.screen === 'play'){
-    // Movement
-    let vx=0, vy=0;
-    if(keys['w']||keys['arrowup']) vy-=1;
-    if(keys['s']||keys['arrowdown']) vy+=1;
-    if(keys['a']||keys['arrowleft']) vx-=1;
-    if(keys['d']||keys['arrowright']) vx+=1;
-    if(vx||vy){
-      const inv = 1/Math.hypot(vx,vy);
-      vx *= inv; vy *= inv;
-    }
-    const sp = player.speed;
-    player.x += vx * sp * dt;
-    player.y += vy * sp * dt;
-    player.x = clamp(player.x, 18, W-18);
-    player.y = clamp(player.y, 18, H-18);
-
-    // Shooting
-    if(mouse.down) shootAim();
-    if(player.shootCooldown > 0) player.shootCooldown -= dt;
-
-    // Bullets update
-    for(let i=bullets.length-1;i>=0;i--){
-      const b=bullets[i];
-      b.x += b.vx*dt;
-      b.y += b.vy*dt;
-      b.life -= dt;
-      if(b.life <= 0 || b.x < -20 || b.x > W+20 || b.y < -20 || b.y > H+20) bullets.splice(i,1);
-      else {
-        // collision with enemies
-        for(let j=enemies.length-1;j>=0;j--){
-          const e = enemies[j];
-          const dx = e.x-b.x, dy = e.y-b.y;
-          const dist2 = dx*dx + dy*dy;
-          if(dist2 < (e.r + b.r)*(e.r + b.r)){
-            e.hp -= b.dmg;
-            bullets.splice(i,1);
-            // particle
-            particles.push({x:b.x,y:b.y,ttl:0.25,size:2,dx:rand(-40,40),dy:rand(-40,40),col:'#ffd1d1'});
-            if(e.hp <= 0){
-              // enemy died
-              spawnDeathParts(e);
-              enemies.splice(j,1);
-              gameState.enemiesLeft--;
-              // coins reward scaled
-              const reward = 5 + Math.floor(e.maxHp/10) + Math.floor(Math.random()*3);
-              gameState.coins += reward;
-              // small HP drop chance
-              if(Math.random() < 0.08){
-                particles.push({x:e.x,y:e.y,ttl:1.0,size:8,dx:0,dy:0,col:'#ffe07a',pickup:'coin',value:8});
-              }
-              updateUI();
-              break;
-            }
-            break;
-          }
-        }
-      }
-    }
-
-    // Enemies update
-    enemies.forEach(e=>{
-      // move toward player
-      const dx = player.x - e.x, dy = player.y - e.y;
-      const dist = Math.hypot(dx,dy) || 1;
-      e.x += (dx/dist) * e.speed * dt;
-      e.y += (dy/dist) * e.speed * dt;
-
-      // contact damage
-      if(dist < e.r + player.r){
-        // collide: damage player, knockback
-        const dmg = Math.max(2, Math.round(e.maxHp/25));
-        player.hp -= dmg * dt * 5; // continuous while overlapping
-        const push = 4;
-        e.x -= (dx/dist) * push * dt;
-        e.y -= (dy/dist) * push * dt;
-      }
-    });
-
-    // particles update
-    for(let i=particles.length-1;i>=0;i--){
-      const p=particles[i];
-      p.x += (p.dx||0)*dt;
-      p.y += (p.dy||0)*dt;
-      p.ttl -= dt;
-      if(p.ttl <= 0) particles.splice(i,1);
-    }
-
-    // check pickups from particles (coins)
-    for(let i=particles.length-1;i>=0;i--){
-      const p=particles[i];
-      if(p.pickup === 'coin'){
-        const d = Math.hypot(player.x - p.x, player.y - p.y);
-        if(d < player.r + (p.size||8)){
-          gameState.coins += p.value || 5;
-          particles.splice(i,1);
-          updateUI();
-        }
-      }
-    }
-
-    // lose condition
-    if(player.hp <= 0){
-      player.hp = 0;
-      gameState.screen = 'dead';
-      gameOver();
-    }
-
-    // level complete
-    if(gameState.enemiesLeft <= 0 && enemies.length === 0){
-      gameState.screen = 'shop';
-      // reward final bonus
-      const bonus = 10 + Math.floor(gameState.level * 2);
-      gameState.coins += bonus;
-      updateUI();
-      showMessage(`Level ${gameState.level} cleared! Earned ${bonus} bonus coins. Visit the shop.`);
-      render(); // show final frame
-    }
-  }
-}
-
-/* spawn death particles */
-function spawnDeathParts(e){
-  for(let i=0;i<10;i++){
-    particles.push({x:e.x + rand(-e.r,e.r), y:e.y + rand(-e.r,e.r), ttl:0.6+Math.random()*0.6, size:2+Math.random()*3, dx:rand(-80,80), dy:rand(-80,80), col:`hsl(${e.colorHue},70%,60%)`});
-  }
-}
-
-/* --- UI updates & shop building --- */
+// UI elements
+const hpEl = document.getElementById('hp');
 const coinsEl = document.getElementById('coins');
 const levelEl = document.getElementById('level');
-const enemiesLeftEl = document.getElementById('enemiesLeft');
-const hpEl = document.getElementById('hp');
-const weaponInfo = document.getElementById('weaponInfo');
-const shopEl = document.getElementById('shop');
-const msgEl = document.getElementById('msg');
+const messagesEl = document.getElementById('messages');
+const shopBtn = document.getElementById('shopBtn');
 
-function updateUI(){
-  coinsEl.textContent = 'Coins: ' + gameState.coins;
-  levelEl.textContent = 'Level: ' + gameState.level;
-  enemiesLeftEl.textContent = 'Enemies: ' + gameState.enemiesLeft;
-  hpEl.textContent = 'HP: ' + Math.max(0, Math.round(player.hp)) + '/' + player.maxHp;
-  weaponInfo.textContent = 'Weapon: ' + (weapons[player.weapon]?.name || player.weapon);
-  rebuildShop();
+// Utility functions
+function randomRange(min, max) {
+  return Math.random() * (max - min) + min;
 }
 
-function rebuildShop(){
-  shopEl.innerHTML = '';
-  // allow switching between unlocked weapons
-  const weaponSwitchRow = document.createElement('div');
-  weaponSwitchRow.className = 'row';
-  const title = document.createElement('div'); title.textContent = 'Weapons:'; title.style.flex='1'; title.className='muted';
-  weaponSwitchRow.appendChild(title);
-  player.unlocked.forEach(w=>{
-    const btn = document.createElement('button');
-    btn.className='shopBtn';
-    btn.textContent = weapons[w].name + (player.weapon===w ? ' (Equipped)' : '');
-    btn.onclick = ()=>{ player.weapon = w; updateUI(); };
-    weaponSwitchRow.appendChild(btn);
-  });
-  shopEl.appendChild(weaponSwitchRow);
-
-  shopItems.forEach(it=>{
-    if(it.cond && !it.cond()) return;
-    const b = document.createElement('button');
-    b.className = 'shopBtn';
-    b.textContent = it.title + ' - ' + it.price + '¢';
-    b.onclick = ()=>{ if(gameState.coins < it.price) { alert('Not enough coins'); return; } it.cb(); updateUI(); };
-    b.disabled = gameState.screen !== 'shop';
-    shopEl.appendChild(b);
-  });
-
-  // Next level button
-  const next = document.createElement('button');
-  next.className = 'shopBtn';
-  next.style.background = 'linear-gradient(180deg,#2a4b67,#12303f)';
-  next.textContent = 'Start Next Level (' + (gameState.level+1) + ')';
-  next.onclick = ()=>{ gameState.level++; startLevel(); updateUI(); };
-  next.disabled = gameState.screen !== 'shop';
-  shopEl.appendChild(next);
-
-  // Back to play when already in play
-  const continueBtn = document.createElement('button');
-  continueBtn.className = 'shopBtn';
-  continueBtn.textContent = 'Resume (Play mode)';
-  continueBtn.onclick = ()=>{ gameState.screen='play'; updateUI(); };
-  continueBtn.style.display = gameState.screen === 'shop' ? 'none' : 'block';
-  shopEl.appendChild(continueBtn);
+function distance(x1, y1, x2, y2) {
+  return Math.hypot(x2 - x1, y2 - y1);
 }
 
-function showMessage(t){
-  msgEl.textContent = t;
-  setTimeout(()=>{ if(msgEl.textContent === t) msgEl.textContent = 'Click to shoot. Move with WASD / arrows.'; }, 3000);
-}
-
-function gameOver(){
-  showMessage('You were defeated. Refresh page to restart.');
-}
-
-/* --- Rendering --- */
-function drawRoundedRect(x,y,w,h,r){
-  ctx.beginPath();
-  ctx.moveTo(x+r,y);
-  ctx.arcTo(x+w,y,x+w,y+h,r);
-  ctx.arcTo(x+w,y+h,x,y+h,r);
-  ctx.arcTo(x,y+h,x,y,r);
-  ctx.arcTo(x,y,x+w,y,r);
-  ctx.closePath();
-}
-function render(){
-  ctx.clearRect(0,0,W,H);
-
-  // background grid
-  ctx.save();
-  ctx.globalAlpha = 0.06;
-  ctx.fillStyle = '#053846';
-  for(let i=20;i<W;i+=40){
-    ctx.fillRect(i,0,1,H);
+// Entity classes
+class Enemy {
+  constructor(x, y, level) {
+    this.x = x;
+    this.y = y;
+    this.radius = 15;
+    this.speed = 50 + level * 10;
+    this.hp = 30 + level * 10;
+    this.maxHp = this.hp;
+    this.color = 'red';
+    this.damage = 10 + level * 5;
   }
-  for(let j=20;j<H;j+=40){
-    ctx.fillRect(0,j,W,1);
+  update(dt) {
+    // Move toward player
+    const dx = player.x - this.x;
+    const dy = player.y - this.y;
+    const dist = Math.hypot(dx, dy);
+    if(dist > 1) {
+      this.x += (dx / dist) * this.speed * dt;
+      this.y += (dy / dist) * this.speed * dt;
+    }
+    // Attack if close
+    if(dist < this.radius + player.radius) {
+      player.hp -= this.damage * dt;
+      if(player.hp < 0) player.hp = 0;
+    }
   }
-  ctx.restore();
-
-  // draw enemies
-  enemies.forEach(e=>{
-    // health bar
-    const barW = e.r*2;
-    const hh = 4;
-    const hpFrac = clamp(e.hp / e.maxHp, 0, 1);
-    ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    drawRoundedRect(e.x - e.r, e.y - e.r - 10, barW, hh, 3);
-    ctx.fill();
-    ctx.fillStyle = `hsl(${e.colorHue},70%,60%)`;
-    drawRoundedRect(e.x - e.r, e.y - e.r - 10, barW * hpFrac, hh, 3);
-    ctx.fill();
-
-    // enemy body
+  draw() {
+    ctx.fillStyle = this.color;
     ctx.beginPath();
-    ctx.fillStyle = `hsl(${e.colorHue},60%,50%)`;
-    ctx.arc(e.x, e.y, e.r, 0, Math.PI*2);
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.fill();
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-    ctx.stroke();
-  });
+    // HP bar
+    ctx.fillStyle = 'black';
+    ctx.fillRect(this.x - this.radius, this.y - this.radius - 10, this.radius * 2, 5);
+    ctx.fillStyle = 'lime';
+    ctx.fillRect(this.x - this.radius, this.y - this.radius - 10, (this.hp / this.maxHp) * this.radius * 2, 5);
+  }
+}
 
-  // bullets
-  bullets.forEach(b=>{
+class SawBlade {
+  constructor(x, y, radius, speed) {
+    this.x = x;
+    this.y = y;
+    this.radius = radius;
+    this.speed = speed; // angular speed radians per second
+    this.angle = 0;
+  }
+  update(dt) {
+    this.angle += this.speed * dt;
+  }
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle);
+    ctx.fillStyle = '#888';
     ctx.beginPath();
-    ctx.fillStyle = '#fff6';
-    ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+    ctx.moveTo(this.radius, 0);
+    for(let i = 0; i < 8; i++) {
+      ctx.lineTo(this.radius * 0.7, this.radius * 0.3);
+      ctx.rotate(Math.PI / 4);
+      ctx.lineTo(this.radius, 0);
+    }
     ctx.fill();
-  });
+    ctx.restore();
+  }
+}
 
-  // player
-  // draw aiming reticle
-  ctx.beginPath();
-  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-  ctx.arc(player.x, player.y, 22, 0, Math.PI*2);
-  ctx.stroke();
+class Chest {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.radius = 12;
+    this.opened = false;
+  }
+  draw() {
+    ctx.fillStyle = this.opened ? '#555' : '#d4af37';
+    ctx.beginPath();
+    ctx.rect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+    ctx.fill();
+  }
+}
 
-  // player body
+class Shop {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.radius = 20;
+  }
+  draw() {
+    ctx.fillStyle = '#3ee0a3';
+    ctx.beginPath();
+    ctx.rect(this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+    ctx.fill();
+  }
+}
+
+class Bullet {
+  constructor(x, y, angle) {
+    this.x = x;
+    this.y = y;
+    this.radius = 5;
+    this.speed = 400;
+    this.angle = angle;
+    this.vx = Math.cos(angle) * this.speed;
+    this.vy = Math.sin(angle) * this.speed;
+    this.damage = player.upgrades.damage;
+  }
+  update(dt) {
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+  }
+  draw() {
+    ctx.fillStyle = '#3ee0a3';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// Generate world entities
+function generateSawBlades(count) {
+  sawBlades = [];
+  for(let i = 0; i < count; i++) {
+    const x = randomRange(50, W - 50);
+    const y = randomRange(50, H - 50);
+    const radius = randomRange(15, 25);
+    const speed = randomRange(2, 5);
+    sawBlades.push(new SawBlade(x, y, radius, speed));
+  }
+}
+
+function generateEnemies(count) {
+  enemies = [];
+  for(let i = 0; i < count; i++) {
+    const x = randomRange(0, W);
+    const y = randomRange(0, H / 3);
+    enemies.push(new Enemy(x, y, player.level));
+  }
+  updateUI();
+}
+
+function generateChests(count) {
+  chests = [];
+  for(let i = 0; i < count; i++) {
+    const x = randomRange(50, W - 50);
+    const y = randomRange(H / 2, H - 50);
+    chests.push(new Chest(x, y));
+  }
+}
+
+function generateShops(count) {
+  shops = [];
+  for(let i = 0; i < count; i++) {
+    const x = randomRange(50, W - 50);
+    const y = randomRange(50, H - 50);
+    shops.push(new Shop(x, y));
+  }
+}
+
+// Handle player movement
+function updatePlayer(dt) {
+  let dx = 0;
+  let dy = 0;
+  if(keys['w'] || keys['arrowup']) dy -= 1;
+  if(keys['s'] || keys['arrowdown']) dy += 1;
+  if(keys['a'] || keys['arrowleft']) dx -= 1;
+  if(keys['d'] || keys['arrowright']) dx += 1;
+  if(dx !== 0 || dy !== 0) {
+    const len = Math.hypot(dx, dy);
+    dx /= len;
+    dy /= len;
+    player.x += dx * player.speed * dt;
+    player.y += dy * player.speed * dt;
+    // Clamp to canvas
+    player.x = Math.min(Math.max(player.radius, player.x), W - player.radius);
+    player.y = Math.min(Math.max(player.radius, player.y), H - player.radius);
+  }
+}
+
+// Handle shooting
+let mousePos = {x: W/2, y: H/2};
+let shooting = false;
+
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  mousePos.x = e.clientX - rect.left;
+  mousePos.y = e.clientY - rect.top;
+});
+
+canvas.addEventListener('mousedown', e => {
+  shooting = true;
+});
+
+canvas.addEventListener('mouseup', e => {
+  shooting = false;
+});
+
+// Shoot bullets
+function shoot() {
+  const angle = Math.atan2(mousePos.y - player.y, mousePos.x - player.x);
+  bullets.push(new Bullet(player.x, player.y, angle));
+}
+
+// Update bullets
+function updateBullets(dt) {
+  for(let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+    b.update(dt);
+    // Remove if out of bounds
+    if(b.x < 0 || b.x > W || b.y < 0 || b.y > H) {
+      bullets.splice(i, 1);
+      continue;
+    }
+    // Check collision with enemies
+    for(let j = enemies.length - 1; j >= 0; j--) {
+      const e = enemies[j];
+      if(distance(b.x, b.y, e.x, e.y) < b.radius + e.radius) {
+        e.hp -= b.damage;
+        bullets.splice(i, 1);
+        if(e.hp <= 0) {
+          player.coins += 10 + Math.floor(Math.random() * 10);
+          enemies.splice(j, 1);
+          showMessage('Enemy defeated! Coins gained.');
+          updateUI();
+        }
+        break;
+      }
+    }
+  }
+}
+
+// Check collisions with saw blades
+function checkSawBladeCollisions(dt) {
+  for(const saw of sawBlades) {
+    if(distance(player.x, player.y, saw.x, saw.y) < player.radius + saw.radius) {
+      player.hp -= 30 * dt; // damage per second
+      if(player.hp < 0) player.hp = 0;
+      showMessage('Hit by saw blade!');
+      updateUI();
+    }
+  }
+}
+
+// Check collisions with chests
+function checkChestCollisions() {
+  for(const chest of chests) {
+    if(!chest.opened && distance(player.x, player.y, chest.x, chest.y) < player.radius + chest.radius) {
+      chest.opened = true;
+      const reward = 20 + Math.floor(Math.random() * 30);
+      player.coins += reward;
+      showMessage(`Chest opened! You found ${reward} coins.`);
+      updateUI();
+    }
+  }
+}
+
+// Check collisions with shops
+function checkShopCollisions() {
+  for(const shop of shops) {
+    if(distance(player.x, player.y, shop.x, shop.y) < player.radius + shop.radius) {
+      shopOpen = true;
+      shopBtn.disabled = false;
+      showMessage('You are near a shop! Click "Open Shop" to upgrade.');
+      return;
+    }
+  }
+  shopOpen = false;
+  shopBtn.disabled = true;
+}
+
+// Shop UI and upgrades
+shopBtn.addEventListener('click', () => {
+  if(!shopOpen) return;
+  const upgrade = prompt('Choose upgrade: 1) Damage (+5) - 50 coins, 2) Speed (+20) - 50 coins, 3) Max HP (+20) - 50 coins');
+  if(!upgrade) return;
+  const choice = parseInt(upgrade);
+  if(isNaN(choice)) return;
+  if(player.coins < 50) {
+    alert('Not enough coins!');
+    return;
+  }
+  player.coins -= 50;
+  switch(choice) {
+    case 1:
+      player.upgrades.damage += 5;
+      showMessage('Damage upgraded!');
+      break;
+    case 2:
+      player.upgrades.speed += 20;
+      player.speed = player.upgrades.speed;
+      showMessage('Speed upgraded!');
+      break;
+    case 3:
+      player.upgrades.hpBoost += 20;
+      player.maxHp += 20;
+      player.hp += 20;
+      showMessage('Max HP upgraded!');
+      break;
+    default:
+      return;
+  }
+  updateUI();
+});
+
+// Update UI
+function updateUI() {
+  hpEl.textContent = Math.floor(player.hp);
+  coinsEl.textContent = player.coins;
+  levelEl.textContent = player.level;
+}
+
+// Show temporary messages
+let messageTimeout;
+function showMessage(text) {
+  clearTimeout(messageTimeout);
+  messagesEl.textContent = text;
+  messageTimeout = setTimeout(() => {
+    messagesEl.textContent = '';
+  }, 3000);
+}
+
+// Game loop
+function gameLoop(timestamp) {
+  if(!lastTime) lastTime = timestamp;
+  const dt = (timestamp - lastTime) / 1000;
+  lastTime = timestamp;
+
+  if(gameOver) {
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'red';
+    ctx.font = '48px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Game Over', W / 2, H / 2);
+    return;
+  }
+
+  // Clear canvas
+  ctx.clearRect(0, 0, W, H);
+
+  // Update entities
+  updatePlayer(dt);
+  if(shooting) shoot();
+  updateBullets(dt);
+  enemies.forEach(e => e.update(dt));
+  sawBlades.forEach(s => s.update(dt));
+  checkSawBladeCollisions(dt);
+  checkChestCollisions();
+  checkShopCollisions();
+
+  // Draw entities
+  chests.forEach(c => c.draw());
+  shops.forEach(s => s.draw());
+  sawBlades.forEach(s => s.draw());
+  enemies.forEach(e => e.draw());
+  bullets.forEach(b => b.draw());
+
+  // Draw player
+  ctx.fillStyle = '#3ee0a3';
   ctx.beginPath();
-  ctx.fillStyle = '#39ddb7';
-  ctx.arc(player.x, player.y, player.r, 0, Math.PI*2);
+  ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
   ctx.fill();
 
-  // gun direction
-  const ang = Math.atan2(mouse.y - player.y, mouse.x - player.x);
-  ctx.save();
-  ctx.translate(player.x, player.y);
-  ctx.rotate(ang);
-  ctx.fillStyle = '#0b1f17';
-  ctx.fillRect(player.r-2, -4, 18, 8);
-  ctx.restore();
+  // Draw player HP bar
+  ctx.fillStyle = 'black';
+  ctx.fillRect(10, 10, 200, 20);
+  ctx.fillStyle = 'lime';
+  ctx.fillRect(10, 10, (player.hp / player.maxHp) * 200, 20);
+  ctx.strokeStyle = '#3ee0a3';
+  ctx.strokeRect(10, 10, 200, 20);
 
-  // particles
-  particles.forEach(p=>{
-    ctx.globalAlpha = clamp(p.ttl,0,1);
-    ctx.fillStyle = p.col || '#fff';
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size || 3, 0, Math.PI*2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
-  });
-
-  // HUD overlay in canvas corner
-  ctx.fillStyle = 'rgba(4,10,18,0.4)';
-  ctx.fillRect(8,8,190,64);
-  ctx.fillStyle = '#9fffe0';
-  ctx.font = 'bold 14px system-ui';
-  ctx.fillText('HP: ' + Math.round(player.hp) + '/' + player.maxHp, 16, 28);
-  ctx.fillText('Coins: ' + gameState.coins, 16, 48);
-  ctx.fillStyle = '#fff';
-  ctx.font = '12px system-ui';
-  ctx.fillText('Level ' + gameState.level + ' — Enemies: ' + gameState.enemiesLeft, 110, 28);
-
-  // Screen overlays
-  if(gameState.screen === 'shop'){
-    ctx.fillStyle = 'rgba(2,6,10,0.55)';
-    ctx.fillRect(0,0,W,H);
-    ctx.fillStyle = '#dfffe6';
-    ctx.font = 'bold 36px system-ui';
-    ctx.fillText('SHOP', W/2 - 60, 120);
-    ctx.font = '16px system-ui';
-    ctx.fillStyle = '#c6ffd6';
-    ctx.fillText('Spend coins on upgrades then click Start Next Level', W/2 - 220, 150);
-  } else if(gameState.screen === 'dead'){
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    ctx.fillRect(0,0,W,H);
-    ctx.fillStyle = '#ffb3bd';
-    ctx.font = 'bold 36px system-ui';
-    ctx.fillText('You Died', W/2 - 80, H/2 - 10);
-    ctx.font = '14px system-ui';
-    ctx.fillText('Refresh to restart', W/2 - 60, H/2 + 20);
+  lastTime = timestamp;
+  if(player.hp <= 0) {
+    gameOver = true;
   }
+
+  requestAnimationFrame(gameLoop);
 }
 
-/* --- Game start --- */
-function loop(ts){
-  const dt = Math.min(0.05, (ts - last) / 1000);
-  last = ts;
-  if(running){
-    update(dt);
-    render();
-    requestAnimationFrame(loop);
-  }
-}
-
-/* Initialize & start */
-function init(){
-  // Set derived stats
-  player.maxHp = 100 + (player.upgrades.healthBoost||0);
-  player.hp = player.maxHp;
-  player.speed = 180;
-
+// Initialize game
+function init() {
+  generateSawBlades(5);
+  generateEnemies(5);
+  generateChests(2);
+  generateShops(1);
   updateUI();
-  startLevel();
-  last = performance.now();
-  requestAnimationFrame(loop);
+  requestAnimationFrame(gameLoop);
 }
+
+// Input listeners
+window.addEventListener('keydown', e => {
+  keys[e.key.toLowerCase()] = true;
+});
+window.addEventListener('keyup', e => {
+  keys[e.key.toLowerCase()] = false;
+});
 
 init();
 
-/* Quick tip: expose small API in console for debugging:
-   window.g = {player, enemies, bullets, particles, gameState}
-*/
-window.g = {player, enemies, bullets, particles, gameState};
-</script>
-</body>
-</html>
+</script> </body> </html>
